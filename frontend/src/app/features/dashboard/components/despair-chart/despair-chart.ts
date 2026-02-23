@@ -75,9 +75,22 @@ export class DespairChartComponent implements OnInit, AfterViewInit {
     });
   }
 
-  private formatChartDate(date: Date): string {
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
+  /**
+   * ISOオフセット文字列 ("2026-01-15T00:00:00+09:00" や "Z") から、
+   * 保存されたタイムゾーンでの MM/dd を返す。
+   * ブラウザのローカルTZに依存しないため、過去日付が正確に表示される。
+   */
+  private formatChartDate(isoString: string): string {
+    const date = new Date(isoString);
+    const match = isoString.match(/([+-])(\d{2}):(\d{2})$/);
+    let offsetMs = 0;
+    if (match) {
+      const sign = match[1] === '+' ? 1 : -1;
+      offsetMs = sign * (parseInt(match[2]) * 60 + parseInt(match[3])) * 60000;
+    }
+    const shifted = new Date(date.getTime() + offsetMs);
+    const mm = String(shifted.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(shifted.getUTCDate()).padStart(2, '0');
     return `${mm}/${dd}`;
   }
 
@@ -89,7 +102,7 @@ export class DespairChartComponent implements OnInit, AfterViewInit {
     // Build unique date labels preserving order
     const labelIndexMap = new Map<string, number>();
     sorted.forEach((e) => {
-      const label = this.formatChartDate(new Date(e.recordedAt));
+      const label = this.formatChartDate(e.recordedAt);
       if (!labelIndexMap.has(label)) {
         labelIndexMap.set(label, labelIndexMap.size);
       }
@@ -102,7 +115,7 @@ export class DespairChartComponent implements OnInit, AfterViewInit {
       if (!memberGroups.has(e.memberName)) {
         memberGroups.set(e.memberName, new Array(labels.length).fill(null));
       }
-      const idx = labelIndexMap.get(this.formatChartDate(new Date(e.recordedAt)))!;
+      const idx = labelIndexMap.get(this.formatChartDate(e.recordedAt))!;
       memberGroups.get(e.memberName)![idx] = e.level;
     });
 
@@ -121,6 +134,8 @@ export class DespairChartComponent implements OnInit, AfterViewInit {
       backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] + '33',
       tension: 0.3,
       spanGaps: true,
+      pointRadius: 5,
+      pointHoverRadius: 7,
     }));
 
     const config: ChartConfiguration = {

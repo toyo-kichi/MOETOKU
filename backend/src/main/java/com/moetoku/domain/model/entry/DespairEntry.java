@@ -1,8 +1,11 @@
 package com.moetoku.domain.model.entry;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 public class DespairEntry {
+
+    private static final ZoneOffset JST_OFFSET = ZoneOffset.ofHours(9);
 
     private final EntryId id;
     private final MemberName memberName;
@@ -39,7 +42,7 @@ public class DespairEntry {
             memberName,
             level,
             comment,
-            recordedAt != null ? recordedAt : OffsetDateTime.now()
+            recordedAt != null ? recordedAt : OffsetDateTime.now(JST_OFFSET)
         );
     }
 
