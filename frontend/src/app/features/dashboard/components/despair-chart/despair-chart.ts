@@ -21,6 +21,13 @@ import { Entry } from '../../../../models/entry.model';
 
 Chart.register(...registerables);
 
+const CHART_COLORS = ['#f44336', '#2196f3', '#4caf50', '#ff9800', '#9c27b0'];
+
+interface MemberChip {
+  name: string;
+  color: string;
+}
+
 @Component({
   selector: 'app-despair-chart',
   standalone: true,
@@ -41,6 +48,7 @@ export class DespairChartComponent implements OnInit, AfterViewInit {
   protected readonly canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('chartCanvas');
   protected readonly memberNameControl = new FormControl('');
   protected readonly loading = signal(false);
+  protected readonly memberChips = signal<MemberChip[]>([]);
 
   private chart: Chart | null = null;
 
@@ -67,37 +75,50 @@ export class DespairChartComponent implements OnInit, AfterViewInit {
     });
   }
 
+  private formatChartDate(date: Date): string {
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${mm}/${dd}`;
+  }
+
   private renderChart(entries: Entry[]): void {
     const sorted = [...entries].sort(
       (a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime(),
     );
 
-    const labels = sorted.map((e) =>
-      new Date(e.recordedAt).toLocaleString('ja-JP', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
+    // Build unique date labels preserving order
+    const labelIndexMap = new Map<string, number>();
+    sorted.forEach((e) => {
+      const label = this.formatChartDate(new Date(e.recordedAt));
+      if (!labelIndexMap.has(label)) {
+        labelIndexMap.set(label, labelIndexMap.size);
+      }
+    });
+    const labels = Array.from(labelIndexMap.keys());
+
+    // Build per-member data arrays aligned to labels
+    const memberGroups = new Map<string, (number | null)[]>();
+    sorted.forEach((e) => {
+      if (!memberGroups.has(e.memberName)) {
+        memberGroups.set(e.memberName, new Array(labels.length).fill(null));
+      }
+      const idx = labelIndexMap.get(this.formatChartDate(new Date(e.recordedAt)))!;
+      memberGroups.get(e.memberName)![idx] = e.level;
+    });
+
+    // Update member chips signal
+    this.memberChips.set(
+      Array.from(memberGroups.keys()).map((name, idx) => ({
+        name,
+        color: CHART_COLORS[idx % CHART_COLORS.length],
+      })),
     );
 
-    const memberGroups = new Map<string, number[]>();
-    sorted.forEach((e) => {
-      const levels = memberGroups.get(e.memberName) ?? new Array(sorted.length).fill(null);
-      memberGroups.set(e.memberName, levels);
-    });
-
-    sorted.forEach((e, i) => {
-      const levels = memberGroups.get(e.memberName)!;
-      levels[i] = e.level;
-    });
-
-    const colors = ['#f44336', '#2196f3', '#4caf50', '#ff9800', '#9c27b0'];
     const datasets = Array.from(memberGroups.entries()).map(([name, data], idx) => ({
       label: name,
       data,
-      borderColor: colors[idx % colors.length],
-      backgroundColor: colors[idx % colors.length] + '33',
+      borderColor: CHART_COLORS[idx % CHART_COLORS.length],
+      backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] + '33',
       tension: 0.3,
       spanGaps: true,
     }));
@@ -109,10 +130,10 @@ export class DespairChartComponent implements OnInit, AfterViewInit {
         responsive: true,
         scales: {
           y: { min: 1, max: 10, title: { display: true, text: '絶望度' } },
-          x: { title: { display: true, text: '記録日時' } },
+          x: { title: { display: true, text: '記録日' } },
         },
         plugins: {
-          legend: { position: 'top' },
+          legend: { display: false },
           title: { display: true, text: '絶望度推移' },
         },
       },
