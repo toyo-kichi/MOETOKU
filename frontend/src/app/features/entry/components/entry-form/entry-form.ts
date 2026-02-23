@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { combineLatest, map, startWith } from 'rxjs';
+import { catchError, combineLatest, map, of, startWith } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { EntryService } from '../../../../core/services/entry.service';
 import { DESPAIR_LEVEL } from '../../../../models/entry-level.constant';
@@ -30,7 +30,7 @@ import { DESPAIR_LEVEL } from '../../../../models/entry-level.constant';
   templateUrl: './entry-form.html',
   styleUrl: './entry-form.scss',
 })
-export class EntryFormComponent implements OnInit {
+export class EntryFormComponent {
   private readonly fb = inject(FormBuilder);
   private readonly entryService = inject(EntryService);
   private readonly snackBar = inject(MatSnackBar);
@@ -49,8 +49,10 @@ export class EntryFormComponent implements OnInit {
     recordedDate: [null as Date | null],
   });
 
-  // 既存メンバー名をロードし、入力値でフィルタしてオートコンプリート候補を提供
-  private readonly memberNames$ = this.entryService.findMemberNames();
+  // 既存メンバー名をロードし、入力値でフィルタしてオートコンプリート候補を提供（エラー時は空配列）
+  private readonly memberNames$ = this.entryService.findMemberNames().pipe(
+    catchError(() => of([] as string[])),
+  );
   protected readonly filteredMemberNames = toSignal(
     combineLatest([
       this.memberNames$,
@@ -64,8 +66,6 @@ export class EntryFormComponent implements OnInit {
     ),
     { initialValue: [] as string[] },
   );
-
-  ngOnInit(): void {}
 
   protected submit(): void {
     if (this.form.invalid) return;

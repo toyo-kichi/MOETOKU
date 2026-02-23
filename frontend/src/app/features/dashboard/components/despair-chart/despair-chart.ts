@@ -16,7 +16,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import { ja } from 'date-fns/locale';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { EntryService } from '../../../../core/services/entry.service';
 import { Entry } from '../../../../models/entry.model';
@@ -99,10 +98,10 @@ export class DespairChartComponent implements OnInit, AfterViewInit {
       })),
     );
 
-    // time scale 用のデータセット: {x: ISO文字列, y: 絶望度}
+    // time scale 用: x にUNIXタイムスタンプ(ms)を使い Point 型に準拠
     const datasets = Array.from(memberGroups.entries()).map(([name, memberEntries], idx) => ({
       label: name,
-      data: memberEntries.map((e) => ({ x: e.recordedAt, y: e.level })),
+      data: memberEntries.map((e) => ({ x: new Date(e.recordedAt).getTime(), y: e.level })),
       borderColor: CHART_COLORS[idx % CHART_COLORS.length],
       backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] + '33',
       tension: 0.3,
@@ -125,11 +124,14 @@ export class DespairChartComponent implements OnInit, AfterViewInit {
           x: {
             type: 'time',
             time: {
-              unit: 'day',
-              displayFormats: { day: 'MM/dd' },
+              minUnit: 'day',
+              displayFormats: {
+                day: 'MM/dd',
+                month: 'yyyy/MM',
+                year: 'yyyy',
+              },
               tooltipFormat: 'yyyy/MM/dd',
             },
-            adapters: { date: { locale: ja } },
             title: { display: true, text: '記録日' },
           },
         },
