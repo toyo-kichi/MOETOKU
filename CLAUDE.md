@@ -2,9 +2,9 @@
 
 ## 開発コマンド
 - **インフラ**: `docker-compose up -d`
-- **バックエンド**: `./mvnw spring-boot:run`
-- **フロントエンド**: `npm start`
-- **テスト**: `npm test` / `./mvnw test`
+- **バックエンド**: `cd backend && ./gradlew bootRun`
+- **フロントエンド**: `cd frontend && npm start`
+- **テスト**: `cd frontend && npm test` / `cd backend && ./gradlew test`
 
 ## 設計思想 (アーキテクチャ)
 - **全体**: クリーンアーキテクチャを意識した疎結合な構成。
@@ -18,5 +18,8 @@
 - グラフ表示には Chart.js を使用する。
 
 ## 現在の進捗
-- [ ] プロジェクト初期構造の作成 (Scaffolding)
-- [ ] Docker Compose 環境構築
+- [x] プロジェクト初期構造の作成 (Scaffolding)
+- [x] Docker Compose 環境構築
+- [x] バックエンド実装（DDD: domain / application / infrastructure / interfaces）
+- [x] フロントエンド実装（Angular 21 Standalone: 入力フォーム + Chart.js ダッシュボード）
+- [x] 設計ドキュメント作成 (docs/DESIGN.md)
