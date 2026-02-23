@@ -37,4 +37,11 @@ public class EntryRepositoryImpl implements EntryRepository {
             .map(mapper::toDomain)
             .toList();
     }
+
+    @Override
+    public List<MemberName> findAllMemberNames() {
+        return jpaRepository.findDistinctMemberNames().stream()
+            .map(MemberName::of)
+            .toList();
+    }
 }

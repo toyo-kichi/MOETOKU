@@ -51,4 +51,10 @@ public class EntryApplicationService {
             .map(EntryDto::from)
             .toList();
     }
+
+    public List<String> findAllMemberNames() {
+        return entryRepository.findAllMemberNames().stream()
+            .map(name -> name.value())
+            .toList();
+    }
 }

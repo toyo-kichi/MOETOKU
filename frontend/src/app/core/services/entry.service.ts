@@ -24,4 +24,10 @@ export class EntryService {
       .get<ApiResult<Entry[]>>(this.baseUrl, { params })
       .pipe(map((result) => result.data ?? []));
   }
+
+  findMemberNames(): Observable<string[]> {
+    return this.http
+      .get<ApiResult<string[]>>(`${this.baseUrl}/members`)
+      .pipe(map((result) => result.data ?? []));
+  }
 }

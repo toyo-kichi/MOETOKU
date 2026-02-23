@@ -12,4 +12,6 @@ public interface EntryRepository {
     List<DespairEntry> findAll();
 
     List<DespairEntry> findByMemberName(MemberName memberName);
+
+    List<MemberName> findAllMemberNames();
 }

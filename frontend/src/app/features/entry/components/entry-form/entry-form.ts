@@ -1,5 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -7,6 +8,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { combineLatest, map, startWith } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { EntryService } from '../../../../core/services/entry.service';
 import { DESPAIR_LEVEL } from '../../../../models/entry-level.constant';
 
@@ -22,11 +25,12 @@ import { DESPAIR_LEVEL } from '../../../../models/entry-level.constant';
     MatButtonModule,
     MatSnackBarModule,
     MatDatepickerModule,
+    MatAutocompleteModule,
   ],
   templateUrl: './entry-form.html',
   styleUrl: './entry-form.scss',
 })
-export class EntryFormComponent {
+export class EntryFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly entryService = inject(EntryService);
   private readonly snackBar = inject(MatSnackBar);
@@ -44,6 +48,24 @@ export class EntryFormComponent {
     comment: [''],
     recordedDate: [null as Date | null],
   });
+
+  // 既存メンバー名をロードし、入力値でフィルタしてオートコンプリート候補を提供
+  private readonly memberNames$ = this.entryService.findMemberNames();
+  protected readonly filteredMemberNames = toSignal(
+    combineLatest([
+      this.memberNames$,
+      this.form.controls.memberName.valueChanges.pipe(startWith('')),
+    ]).pipe(
+      map(([names, value]) => {
+        const input = (value ?? '').toLowerCase();
+        if (!input) return names;
+        return names.filter((n) => n.toLowerCase().includes(input));
+      }),
+    ),
+    { initialValue: [] as string[] },
+  );
+
+  ngOnInit(): void {}
 
   protected submit(): void {
     if (this.form.invalid) return;

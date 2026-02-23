@@ -6,7 +6,17 @@
     <form [formGroup]="form" (ngSubmit)="submit()" class="entry-form">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>メンバー名</mat-label>
-        <input matInput formControlName="memberName" placeholder="例: 田中" />
+        <input
+          matInput
+          formControlName="memberName"
+          [matAutocomplete]="autoMember"
+          placeholder="例: 田中"
+        />
+        <mat-autocomplete #autoMember autoActiveFirstOption>
+          @for (name of filteredMemberNames(); track name) {
+            <mat-option [value]="name">{{ name }}</mat-option>
+          }
+        </mat-autocomplete>
         @if (form.controls.memberName.hasError('required')) {
           <mat-error>メンバー名は必須です</mat-error>
         }

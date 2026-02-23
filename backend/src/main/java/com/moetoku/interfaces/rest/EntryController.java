@@ -43,4 +43,9 @@ public class EntryController {
         }
         return Result.ok(service.findAll());
     }
+
+    @GetMapping("/members")
+    public Result<List<String>> findMembers() {
+        return Result.ok(service.findAllMemberNames());
+    }
 }
