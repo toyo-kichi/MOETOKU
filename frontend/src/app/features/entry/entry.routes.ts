@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 export const entryRoutes: Routes = [
   {
     path: '',
+    title: '記録する | MOETOKU',
     loadComponent: () =>
       import('./components/entry-form/entry-form').then((m) => m.EntryFormComponent),
   },
