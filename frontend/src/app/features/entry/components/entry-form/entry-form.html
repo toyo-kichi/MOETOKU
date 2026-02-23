@@ -29,6 +29,13 @@
         <textarea matInput formControlName="comment" rows="3" placeholder="例: 最悪のデプロイ"></textarea>
       </mat-form-field>
 
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>記録日（省略可: 本日）</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="recordedDate" />
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+
       <button
         mat-raised-button
         color="warn"

@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -20,6 +21,7 @@ import { DESPAIR_LEVEL } from '../../../../models/entry-level.constant';
     MatSelectModule,
     MatButtonModule,
     MatSnackBarModule,
+    MatDatepickerModule,
   ],
   templateUrl: './entry-form.html',
   styleUrl: './entry-form.scss',
@@ -36,18 +38,24 @@ export class EntryFormComponent {
   );
   protected readonly submitting = signal(false);
 
-  protected readonly form = this.fb.nonNullable.group({
+  protected readonly form = this.fb.group({
     memberName: ['', [Validators.required, Validators.maxLength(100)]],
     level: [5, [Validators.required, Validators.min(DESPAIR_LEVEL.MIN), Validators.max(DESPAIR_LEVEL.MAX)]],
     comment: [''],
+    recordedDate: [null as Date | null],
   });
 
   protected submit(): void {
     if (this.form.invalid) return;
     this.submitting.set(true);
 
-    const { memberName, level, comment } = this.form.getRawValue();
-    this.entryService.create({ memberName, level, comment: comment || undefined }).subscribe({
+    const { memberName, level, comment, recordedDate } = this.form.getRawValue();
+    this.entryService.create({
+      memberName: memberName!,
+      level: level!,
+      comment: comment || undefined,
+      recordedDate: recordedDate ? this.formatLocalDate(recordedDate) : undefined,
+    }).subscribe({
       next: () => {
         this.snackBar.open('絶望度を記録しました！', '閉じる', { duration: 3000 });
         this.form.reset({ level: 5 });
@@ -58,5 +66,12 @@ export class EntryFormComponent {
         this.submitting.set(false);
       },
     });
+  }
+
+  private formatLocalDate(date: Date): string {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 }

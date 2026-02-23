@@ -9,11 +9,16 @@ import com.moetoku.domain.repository.EntryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
 public class EntryApplicationService {
+
+    private static final ZoneOffset JST_OFFSET = ZoneOffset.ofHours(9);
 
     private final EntryRepository entryRepository;
 
@@ -23,10 +28,14 @@ public class EntryApplicationService {
 
     @Transactional
     public EntryDto create(CreateEntryCommand command) {
+        OffsetDateTime recordedAt = command.recordedDate() != null
+            ? command.recordedDate().atTime(LocalTime.MIDNIGHT).atOffset(JST_OFFSET)
+            : null;
         DespairEntry entry = DespairEntry.create(
             MemberName.of(command.memberName()),
             DespairLevel.of(command.level()),
-            command.comment()
+            command.comment(),
+            recordedAt
         );
         return EntryDto.from(entryRepository.save(entry));
     }

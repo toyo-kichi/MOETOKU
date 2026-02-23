@@ -25,12 +25,21 @@ public class DespairEntry {
     }
 
     public static DespairEntry create(MemberName memberName, DespairLevel level, String comment) {
+        return create(memberName, level, comment, null);
+    }
+
+    public static DespairEntry create(
+        MemberName memberName,
+        DespairLevel level,
+        String comment,
+        OffsetDateTime recordedAt
+    ) {
         return new DespairEntry(
             EntryId.generate(),
             memberName,
             level,
             comment,
-            OffsetDateTime.now()
+            recordedAt != null ? recordedAt : OffsetDateTime.now()
         );
     }
 

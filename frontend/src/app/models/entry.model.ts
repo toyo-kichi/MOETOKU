@@ -10,4 +10,5 @@ export interface CreateEntryRequest {
   memberName: string;
   level: number;
   comment?: string;
+  recordedDate?: string;
 }
