@@ -1,0 +1,43 @@
+<mat-card class="entry-card">
+  <mat-card-header>
+    <mat-card-title>絶望度を記録する</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="entry-form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>メンバー名</mat-label>
+        <input matInput formControlName="memberName" placeholder="例: 田中" />
+        @if (form.controls.memberName.hasError('required')) {
+          <mat-error>メンバー名は必須です</mat-error>
+        }
+        @if (form.controls.memberName.hasError('maxlength')) {
+          <mat-error>100文字以内で入力してください</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>絶望度 ({{ DESPAIR_LEVEL.MIN }}〜{{ DESPAIR_LEVEL.MAX }})</mat-label>
+        <mat-select formControlName="level">
+          @for (level of levelOptions; track level) {
+            <mat-option [value]="level">{{ level }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>コメント (任意)</mat-label>
+        <textarea matInput formControlName="comment" rows="3" placeholder="例: 最悪のデプロイ"></textarea>
+      </mat-form-field>
+
+      <button
+        mat-raised-button
+        color="warn"
+        type="submit"
+        [disabled]="form.invalid || submitting()"
+        class="submit-btn"
+      >
+        {{ submitting() ? '記録中...' : '記録する' }}
+      </button>
+    </form>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,19 @@
+<mat-card class="dashboard-card">
+  <mat-card-header>
+    <mat-card-title>絶望度ダッシュボード</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>メンバー名でフィルタ</mat-label>
+      <input matInput [formControl]="memberNameControl" placeholder="空欄で全員表示" />
+    </mat-form-field>
+
+    @if (loading()) {
+      <p class="loading-text">読み込み中...</p>
+    }
+
+    <div class="chart-container">
+      <canvas #chartCanvas></canvas>
+    </div>
+  </mat-card-content>
+</mat-card>
