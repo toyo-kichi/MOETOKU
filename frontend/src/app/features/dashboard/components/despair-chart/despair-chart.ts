@@ -15,6 +15,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import 'chartjs-adapter-date-fns';
+import { ja } from 'date-fns/locale';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { EntryService } from '../../../../core/services/entry.service';
 import { Entry } from '../../../../models/entry.model';
@@ -75,51 +77,21 @@ export class DespairChartComponent implements OnInit, AfterViewInit {
     });
   }
 
-  /**
-   * ISOオフセット文字列 ("2026-01-15T00:00:00+09:00" や "Z") から、
-   * 保存されたタイムゾーンでの MM/dd を返す。
-   * ブラウザのローカルTZに依存しないため、過去日付が正確に表示される。
-   */
-  private formatChartDate(isoString: string): string {
-    const date = new Date(isoString);
-    const match = isoString.match(/([+-])(\d{2}):(\d{2})$/);
-    let offsetMs = 0;
-    if (match) {
-      const sign = match[1] === '+' ? 1 : -1;
-      offsetMs = sign * (parseInt(match[2]) * 60 + parseInt(match[3])) * 60000;
-    }
-    const shifted = new Date(date.getTime() + offsetMs);
-    const mm = String(shifted.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(shifted.getUTCDate()).padStart(2, '0');
-    return `${mm}/${dd}`;
-  }
-
   private renderChart(entries: Entry[]): void {
     const sorted = [...entries].sort(
       (a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime(),
     );
 
-    // Build unique date labels preserving order
-    const labelIndexMap = new Map<string, number>();
-    sorted.forEach((e) => {
-      const label = this.formatChartDate(e.recordedAt);
-      if (!labelIndexMap.has(label)) {
-        labelIndexMap.set(label, labelIndexMap.size);
-      }
-    });
-    const labels = Array.from(labelIndexMap.keys());
-
-    // Build per-member data arrays aligned to labels
-    const memberGroups = new Map<string, (number | null)[]>();
+    // メンバーごとにエントリをグループ化
+    const memberGroups = new Map<string, Entry[]>();
     sorted.forEach((e) => {
       if (!memberGroups.has(e.memberName)) {
-        memberGroups.set(e.memberName, new Array(labels.length).fill(null));
+        memberGroups.set(e.memberName, []);
       }
-      const idx = labelIndexMap.get(this.formatChartDate(e.recordedAt))!;
-      memberGroups.get(e.memberName)![idx] = e.level;
+      memberGroups.get(e.memberName)!.push(e);
     });
 
-    // Update member chips signal
+    // memberChips signal を更新
     this.memberChips.set(
       Array.from(memberGroups.keys()).map((name, idx) => ({
         name,
@@ -127,25 +99,39 @@ export class DespairChartComponent implements OnInit, AfterViewInit {
       })),
     );
 
-    const datasets = Array.from(memberGroups.entries()).map(([name, data], idx) => ({
+    // time scale 用のデータセット: {x: ISO文字列, y: 絶望度}
+    const datasets = Array.from(memberGroups.entries()).map(([name, memberEntries], idx) => ({
       label: name,
-      data,
+      data: memberEntries.map((e) => ({ x: e.recordedAt, y: e.level })),
       borderColor: CHART_COLORS[idx % CHART_COLORS.length],
       backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] + '33',
       tension: 0.3,
-      spanGaps: true,
       pointRadius: 5,
       pointHoverRadius: 7,
     }));
 
     const config: ChartConfiguration = {
       type: 'line',
-      data: { labels, datasets },
+      data: { datasets },
       options: {
         responsive: true,
         scales: {
-          y: { min: 1, max: 10, title: { display: true, text: '絶望度' } },
-          x: { title: { display: true, text: '記録日' } },
+          y: {
+            min: 1,
+            max: 10,
+            ticks: { stepSize: 1 },
+            title: { display: true, text: '絶望度' },
+          },
+          x: {
+            type: 'time',
+            time: {
+              unit: 'day',
+              displayFormats: { day: 'MM/dd' },
+              tooltipFormat: 'yyyy/MM/dd',
+            },
+            adapters: { date: { locale: ja } },
+            title: { display: true, text: '記録日' },
+          },
         },
         plugins: {
           legend: { display: false },
