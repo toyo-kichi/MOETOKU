@@ -197,11 +197,40 @@ src/app/
 
 ---
 
+## Docker ランタイムについて
+
+`docker compose` を使うには以下のどちらかが必要です。
+
+### 方法 A: Docker Desktop（推奨）
+
+インストール後に Docker Desktop を起動するだけで `docker` コマンドが使えます。
+
+```bash
+# Docker Desktop 起動後
+docker compose up -d
+```
+
+### 方法 B: Colima（CLI のみ、Docker Desktop なしで動かしたい場合）
+
+```bash
+brew install colima docker docker-compose
+
+# ~/.docker/config.json に以下を追記（compose プラグインのパス設定）
+# {"cliPluginsExtraDirs":["/opt/homebrew/lib/docker/cli-plugins"]}
+
+colima start        # PC 再起動後は毎回必要
+docker compose up -d
+```
+
+> **注意**: PC 再起動後、Colima を使う場合は `colima start` を先に実行してから `docker compose up -d` を実行してください。Docker Desktop を使う場合はアプリを起動するだけで OK です。
+
+---
+
 ## 起動手順
 
 ```bash
 # 1. DB起動
-docker-compose up -d
+docker compose up -d
 docker exec -it moetoku-db psql -U moetoku -d moetoku -c "\dt"
 
 # 2. バックエンド起動
